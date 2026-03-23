@@ -18,6 +18,8 @@ import {
   generateAgentInstructions,
   generateClineRules,
   generateCursorRules,
+  generateKiloRules,
+  generateWindsurfRules,
 } from "./skill-content.js";
 
 const MEMSTATE_DOCS_URL = "https://memstate.ai/docs/skills";
@@ -29,9 +31,14 @@ interface AgentInfo {
   id: string;
   name: string;
   detected: boolean;
+  /** Where the SKILL.md file is installed */
   skillPath: string;
+  /** Human-readable filename shown in output */
   instructionFile?: string;
+  /** Absolute path to the instruction file */
   instructionPath?: string;
+  /** True if this is a global (user-level) install */
+  isGlobal?: boolean;
 }
 
 function detectGitRepoName(cwd: string): string | null {
@@ -51,20 +58,43 @@ function detectAgents(cwd: string): AgentInfo[] {
   const home = os.homedir();
 
   const agents: AgentInfo[] = [
+    // ── Claude Code ────────────────────────────────────────────────────────
     {
       id: "claude-code-project",
-      name: "Claude Code (project-level skill)",
+      name: "Claude Code (project-level)",
       detected: fs.existsSync(path.join(cwd, ".claude")) || fs.existsSync(path.join(home, ".claude")),
       skillPath: path.join(cwd, ".claude", "skills", "memstate", "SKILL.md"),
       instructionFile: "CLAUDE.md",
       instructionPath: path.join(cwd, "CLAUDE.md"),
     },
     {
-      id: "claude-code-personal",
-      name: "Claude Code (personal — all projects)",
+      id: "claude-code-global",
+      name: "Claude Code (global — all projects on this machine)",
       detected: fs.existsSync(path.join(home, ".claude")),
       skillPath: path.join(home, ".claude", "skills", "memstate", "SKILL.md"),
+      isGlobal: true,
     },
+    // ── Kilo Code ─────────────────────────────────────────────────────────
+    {
+      id: "kilo-project",
+      name: "Kilo Code (project-level)",
+      detected:
+        fs.existsSync(path.join(cwd, ".kilocode")) ||
+        fs.existsSync(path.join(home, ".kilocode")),
+      skillPath: path.join(cwd, ".kilocode", "skills", "memstate", "SKILL.md"),
+      instructionFile: ".kilocode/rules/memstate.md",
+      instructionPath: path.join(cwd, ".kilocode", "rules", "memstate.md"),
+    },
+    {
+      id: "kilo-global",
+      name: "Kilo Code (global — all projects on this machine)",
+      detected: fs.existsSync(path.join(home, ".kilocode")),
+      skillPath: path.join(home, ".kilocode", "skills", "memstate", "SKILL.md"),
+      instructionFile: "~/.kilocode/rules/memstate.md",
+      instructionPath: path.join(home, ".kilocode", "rules", "memstate.md"),
+      isGlobal: true,
+    },
+    // ── Cline ─────────────────────────────────────────────────────────────
     {
       id: "cline",
       name: "Cline (VS Code)",
@@ -75,9 +105,10 @@ function detectAgents(cwd: string): AgentInfo[] {
       instructionFile: ".clinerules/memstate.md",
       instructionPath: path.join(cwd, ".clinerules", "memstate.md"),
     },
+    // ── Cursor ────────────────────────────────────────────────────────────
     {
-      id: "cursor",
-      name: "Cursor",
+      id: "cursor-project",
+      name: "Cursor (project-level)",
       detected:
         fs.existsSync(path.join(cwd, ".cursor")) ||
         fs.existsSync(path.join(home, ".cursor")),
@@ -86,8 +117,29 @@ function detectAgents(cwd: string): AgentInfo[] {
       instructionPath: path.join(cwd, ".cursor", "rules", "memstate.mdc"),
     },
     {
+      id: "cursor-global",
+      name: "Cursor (global — all projects on this machine)",
+      detected: fs.existsSync(path.join(home, ".cursor")),
+      skillPath: path.join(home, ".cursor", "rules", "memstate.mdc"),
+      instructionFile: "~/.cursor/rules/memstate.mdc",
+      instructionPath: path.join(home, ".cursor", "rules", "memstate.mdc"),
+      isGlobal: true,
+    },
+    // ── Windsurf ──────────────────────────────────────────────────────────
+    {
+      id: "windsurf",
+      name: "Windsurf",
+      detected:
+        fs.existsSync(path.join(cwd, ".windsurf")) ||
+        fs.existsSync(path.join(home, ".codeium", "windsurf")),
+      skillPath: path.join(cwd, ".windsurf", "rules", "memstate.md"),
+      instructionFile: ".windsurf/rules/memstate.md",
+      instructionPath: path.join(cwd, ".windsurf", "rules", "memstate.md"),
+    },
+    // ── Universal instruction files ───────────────────────────────────────
+    {
       id: "agents-md",
-      name: "AGENTS.md (universal — OpenAI Codex, Gemini, Amp, Jules, etc.)",
+      name: "AGENTS.md (universal — OpenAI Codex, Gemini, Amp, Jules, Factory, etc.)",
       detected: fs.existsSync(path.join(cwd, "AGENTS.md")) || fs.existsSync(path.join(cwd, ".git")),
       skillPath: path.join(cwd, ".claude", "skills", "memstate", "SKILL.md"),
       instructionFile: "AGENTS.md",
@@ -140,9 +192,20 @@ function updateInstructionFile(
       return { success: true, message: "✅ Created" };
     }
 
-    if (agentId === "cursor") {
-      // Cursor uses MDC format
+    if (agentId === "cursor-project" || agentId === "cursor-global") {
       content = generateCursorRules(projectId);
+      fs.writeFileSync(filePath, content, "utf-8");
+      return { success: true, message: "✅ Created" };
+    }
+
+    if (agentId === "kilo-project" || agentId === "kilo-global") {
+      content = generateKiloRules(projectId);
+      fs.writeFileSync(filePath, content, "utf-8");
+      return { success: true, message: "✅ Created" };
+    }
+
+    if (agentId === "windsurf") {
+      content = generateWindsurfRules(projectId);
       fs.writeFileSync(filePath, content, "utf-8");
       return { success: true, message: "✅ Created" };
     }
@@ -256,22 +319,25 @@ export async function main(): Promise<void> {
   const detectedAgents = allAgents.filter((a) => a.detected);
   const undetectedAgents = allAgents.filter((a) => !a.detected);
 
-  if (detectedAgents.length > 0) {
-    console.log("Detected agents/tools:\n");
-    detectedAgents.forEach((a, i) => {
-      console.log(`  ${i + 1}. ${a.name}`);
-    });
-  }
-
-  if (undetectedAgents.length > 0) {
-    console.log("\nOther available targets:\n");
-    undetectedAgents.forEach((a, i) => {
-      console.log(`  ${detectedAgents.length + i + 1}. ${a.name}`);
-    });
-  }
+  allAgents.forEach((agent, i) => {
+    const detected = agent.detected ? " ← detected" : "";
+    const scope = agent.isGlobal ? " [global]" : " [project]";
+    console.log(`  ${i + 1}. ${agent.name}${scope}${detected}`);
+    if (agent.skillPath) {
+      const displayPath = agent.skillPath.replace(os.homedir(), "~");
+      console.log(`     skill → ${displayPath}`);
+    }
+    if (agent.instructionPath && !agent.isGlobal) {
+      const displayPath = agent.instructionPath.replace(os.homedir(), "~");
+      console.log(`     rules → ${displayPath}`);
+    } else if (agent.instructionPath && agent.isGlobal) {
+      const displayPath = agent.instructionPath.replace(os.homedir(), "~");
+      console.log(`     rules → ${displayPath}`);
+    }
+  });
 
   const totalCount = allAgents.length;
-  console.log(`  ${totalCount + 1}. All of the above`);
+  console.log(`\n  ${totalCount + 1}. All of the above`);
   console.log(`  ${totalCount + 2}. Cancel\n`);
 
   const selection = await promptUser(

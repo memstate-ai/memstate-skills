@@ -205,6 +205,53 @@ export function generateClineRules(projectId: string): string {
 }
 
 /**
+ * Generate Kilo Code rules content for .kilocode/rules/memstate.md
+ * Kilo Code rules are always-on (injected every prompt), unlike skills which are on-demand.
+ * This provides a lightweight always-present reminder alongside the on-demand SKILL.md.
+ */
+export function generateKiloRules(projectId: string): string {
+  return `# Memstate AI Memory
+
+This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
+
+## Before each task
+- Run \`memstate_get(project_id="${projectId}")\` to load existing context
+- Or search: \`memstate_search(query="<topic>", project_id="${projectId}")\`
+
+## After each task
+- Save a summary: \`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
+
+## Key principles
+- Always check memory before starting — never re-explain what's already stored
+- Prefer \`memstate_remember\` for summaries, \`memstate_set\` only for single key=value facts
+`;
+}
+
+/**
+ * Generate Windsurf rules content for .windsurf/rules/memstate.md
+ */
+export function generateWindsurfRules(projectId: string): string {
+  return `# Memstate AI Memory
+
+This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
+
+## Before each task
+Check existing project knowledge to avoid duplicate work:
+\`memstate_get(project_id="${projectId}")\`
+
+## After each task
+Save a markdown summary of what was done:
+\`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
+
+## Tools
+- \`memstate_remember\` — preferred for summaries and decisions
+- \`memstate_set\` — single key=value facts only
+- \`memstate_get\` — browse before tasks
+- \`memstate_search\` — find by meaning
+`;
+}
+
+/**
  * Generate Cursor MDC rules content for .cursor/rules/memstate.mdc
  */
 export function generateCursorRules(projectId: string): string {

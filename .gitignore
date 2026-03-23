@@ -3,3 +3,10 @@ dist/
 *.tsbuildinfo
 .env
 .DS_Store
+
+# Test artifacts from CLI smoke tests
+cli/.claude/
+cli/.clinerules/
+cli/.cursor/
+cli/.kilocode/
+cli/.windsurf/

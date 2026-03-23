@@ -1,11 +1,17 @@
 /**
- * install.ts — Install Memstate skill files into the current project or user home
+ * install.ts — Install Memstate skill files only (no instruction file updates)
  *
  * Targets:
- *   - .claude/skills/memstate/SKILL.md    (Claude Code project-level)
- *   - ~/.claude/skills/memstate/SKILL.md  (Claude Code personal)
- *   - .clinerules/memstate.md             (Cline)
- *   - .cursor/rules/memstate.mdc          (Cursor)
+ *   - .claude/skills/memstate/SKILL.md         (Claude Code project-level)
+ *   - ~/.claude/skills/memstate/SKILL.md        (Claude Code global)
+ *   - .kilocode/skills/memstate/SKILL.md        (Kilo Code project-level)
+ *   - ~/.kilocode/skills/memstate/SKILL.md      (Kilo Code global)
+ *   - .clinerules/memstate.md                   (Cline)
+ *   - .cursor/rules/memstate.mdc                (Cursor project-level)
+ *   - ~/.cursor/rules/memstate.mdc              (Cursor global)
+ *   - .windsurf/rules/memstate.md               (Windsurf)
+ *
+ * For full setup including instruction file updates, use: npx @memstate/skills setup
  */
 
 import * as fs from "fs";
@@ -17,43 +23,60 @@ import { SKILL_MD_CONTENT } from "./skill-content.js";
 interface InstallTarget {
   id: string;
   name: string;
-  description: string;
   filePath: string;
-  content: string;
-  isPersonal?: boolean;
+  isGlobal?: boolean;
 }
 
 function getInstallTargets(cwd: string): InstallTarget[] {
   const home = os.homedir();
   return [
+    // ── Claude Code ────────────────────────────────────────────────────────
     {
       id: "claude-project",
-      name: "Claude Code (project)",
-      description: "Installs to .claude/skills/memstate/SKILL.md in current directory",
+      name: "Claude Code (project-level)",
       filePath: path.join(cwd, ".claude", "skills", "memstate", "SKILL.md"),
-      content: SKILL_MD_CONTENT,
     },
     {
-      id: "claude-personal",
-      name: "Claude Code (personal — all projects)",
-      description: `Installs to ~/.claude/skills/memstate/SKILL.md`,
+      id: "claude-global",
+      name: "Claude Code (global — all projects on this machine)",
       filePath: path.join(home, ".claude", "skills", "memstate", "SKILL.md"),
-      content: SKILL_MD_CONTENT,
-      isPersonal: true,
+      isGlobal: true,
     },
+    // ── Kilo Code ─────────────────────────────────────────────────────────
+    {
+      id: "kilo-project",
+      name: "Kilo Code (project-level)",
+      filePath: path.join(cwd, ".kilocode", "skills", "memstate", "SKILL.md"),
+    },
+    {
+      id: "kilo-global",
+      name: "Kilo Code (global — all projects on this machine)",
+      filePath: path.join(home, ".kilocode", "skills", "memstate", "SKILL.md"),
+      isGlobal: true,
+    },
+    // ── Cline ─────────────────────────────────────────────────────────────
     {
       id: "cline",
       name: "Cline",
-      description: "Installs to .clinerules/memstate.md in current directory",
       filePath: path.join(cwd, ".clinerules", "memstate.md"),
-      content: SKILL_MD_CONTENT,
+    },
+    // ── Cursor ────────────────────────────────────────────────────────────
+    {
+      id: "cursor-project",
+      name: "Cursor (project-level)",
+      filePath: path.join(cwd, ".cursor", "rules", "memstate.mdc"),
     },
     {
-      id: "cursor",
-      name: "Cursor",
-      description: "Installs to .cursor/rules/memstate.mdc in current directory",
-      filePath: path.join(cwd, ".cursor", "rules", "memstate.mdc"),
-      content: SKILL_MD_CONTENT,
+      id: "cursor-global",
+      name: "Cursor (global — all projects on this machine)",
+      filePath: path.join(home, ".cursor", "rules", "memstate.mdc"),
+      isGlobal: true,
+    },
+    // ── Windsurf ──────────────────────────────────────────────────────────
+    {
+      id: "windsurf",
+      name: "Windsurf",
+      filePath: path.join(cwd, ".windsurf", "rules", "memstate.md"),
     },
   ];
 }
@@ -67,7 +90,7 @@ function installFile(filePath: string, content: string): { success: boolean; mes
     const dir = path.dirname(filePath);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(filePath, content, "utf-8");
-    return { success: true, message: `✅ Installed` };
+    return { success: true, message: "✅ Installed" };
   } catch (err) {
     return {
       success: false,
@@ -83,17 +106,22 @@ export async function main(): Promise<void> {
   console.log("\n╔══════════════════════════════════════════════╗");
   console.log("║     Memstate AI Skills — Install             ║");
   console.log("╚══════════════════════════════════════════════╝\n");
-  console.log(`Installing to: ${cwd}\n`);
+  console.log(`Current directory: ${cwd}\n`);
+  console.log("Select where to install the Memstate skill:\n");
+  console.log("  (For full setup including agent instruction files, run: npx @memstate/skills setup)\n");
 
   const targets = getInstallTargets(cwd);
 
-  console.log("Select where to install the Memstate skill:\n");
   targets.forEach((t, i) => {
     const exists = fs.existsSync(t.filePath);
-    console.log(`  ${i + 1}. ${t.name}${exists ? " (will overwrite)" : ""}`);
-    console.log(`     ${t.description}`);
+    const scope = t.isGlobal ? " [global]" : " [project]";
+    const overwrite = exists ? " (will overwrite)" : "";
+    const displayPath = t.filePath.replace(os.homedir(), "~");
+    console.log(`  ${i + 1}. ${t.name}${scope}${overwrite}`);
+    console.log(`     → ${displayPath}`);
   });
-  console.log(`  ${targets.length + 1}. All of the above`);
+
+  console.log(`\n  ${targets.length + 1}. All of the above`);
   console.log(`  ${targets.length + 2}. Cancel\n`);
 
   const answer = await promptUser(rl, "Enter number(s) separated by commas (e.g. 1,3): ");
@@ -125,18 +153,19 @@ export async function main(): Promise<void> {
   console.log("\nInstalling...\n");
 
   for (const target of selectedTargets) {
+    const displayPath = target.filePath.replace(os.homedir(), "~");
     process.stdout.write(`  ${target.name}... `);
-    const result = installFile(target.filePath, target.content);
-    console.log(`${result.message}`);
+    const result = installFile(target.filePath, SKILL_MD_CONTENT);
+    console.log(result.message);
     if (result.success) {
-      console.log(`     → ${target.filePath}`);
+      console.log(`     → ${displayPath}`);
     }
   }
 
   console.log("\n═══════════════════════════════════════════════");
   console.log("✅ Skill installed!\n");
   console.log("Next steps:");
-  console.log("  1. Make sure the Memstate MCP server is configured:");
+  console.log("  1. Configure the Memstate MCP server:");
   console.log("     npx @memstate/mcp setup");
   console.log("  2. Restart your AI agent");
   console.log("  3. The skill will activate automatically when relevant\n");
@@ -146,7 +175,10 @@ export async function main(): Promise<void> {
 }
 
 // Allow direct execution
-if (process.argv[1] && (process.argv[1].endsWith("install.js") || process.argv[1].endsWith("install.ts"))) {
+if (
+  process.argv[1] &&
+  (process.argv[1].endsWith("install.js") || process.argv[1].endsWith("install.ts"))
+) {
   main().catch((err) => {
     console.error(`\nInstall failed: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
