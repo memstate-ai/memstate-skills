@@ -1,11 +1,12 @@
 {
   "name": "@memstate/skills",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Install Memstate AI skills into your AI coding agent — Claude Code, Cline, Cursor, Windsurf, and more.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "memstate-skills": "dist/cli.js"
+    "memstate-skills": "dist/cli.js",
+    "skills": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
