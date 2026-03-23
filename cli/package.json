@@ -1,0 +1,53 @@
+{
+  "name": "@memstate/skills",
+  "version": "1.0.0",
+  "description": "Install Memstate AI skills into your AI coding agent — Claude Code, Cline, Cursor, Windsurf, and more.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "memstate-skills": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "dev": "ts-node src/cli.ts"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "memstate",
+    "ai",
+    "memory",
+    "agents",
+    "claude",
+    "cursor",
+    "cline",
+    "skill",
+    "agent-skills",
+    "mcp",
+    "claude-code",
+    "windsurf",
+    "kilo",
+    "gemini"
+  ],
+  "author": "Memstate AI <hello@memstate.ai> (https://memstate.ai)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/memstate-ai/memstate-skills.git"
+  },
+  "homepage": "https://memstate.ai/docs/skills",
+  "bugs": {
+    "url": "https://github.com/memstate-ai/memstate-skills/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
