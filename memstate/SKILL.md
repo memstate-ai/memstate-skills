@@ -17,11 +17,11 @@ project context automatically.
 ## Project ID
 
 The **project_id** is the key that namespaces all memories. Use:
-- The **GitHub repository name** (e.g., `my-app`, `memstate-mcp`)
-- Or any short, descriptive topic name (e.g., `frontend-redesign`, `q2-planning`)
+- The **GitHub repository name** (e.g., `my_app`, `memstate_mcp`)
+- Or any short, descriptive topic name (e.g., `frontend_redesign`, `q2_planning`)
 
-Keep it lowercase with hyphens. All keypaths are automatically prefixed with
-`project.<project_id>.` so you never need to include the project name in keypaths.
+**CRITICAL RULE:** Keep `project_id` lowercase with underscores (`_`) only. **NO HYPHENS.** 
+All keypaths are automatically prefixed with `project.<project_id>.` so you never need to include the project name in keypaths.
 
 ## Workflow
 
@@ -77,26 +77,26 @@ memstate_set(project_id="<project>", keypath="config.port", value="8080")
 ### memstate_get
 
 ```
-memstate_get(project_id="myapp")                      # full project tree
-memstate_get(project_id="myapp", keypath="auth")      # subtree
-memstate_get(memory_id="mem_abc123")                  # single memory by ID
+memstate_get(project_id="my_app")                      # full project tree
+memstate_get(project_id="my_app", keypath="auth")      # subtree
+memstate_get(project_id="my_app", keypath="auth", at_revision=5) # time-travel
 ```
 
 ### memstate_search
 
 ```
-memstate_search(query="authentication setup", project_id="myapp")
-memstate_search(query="database schema", project_id="myapp", limit=10)
+memstate_search(query="authentication setup", project_id="my_app")
+memstate_search(query="database schema", project_id="my_app", limit=10)
 ```
 
-Returns ranked results with `memory_id`. Use `memstate_get(memory_id=...)` to
-fetch full content of a result.
+Returns ranked results. Use `memstate_get(project_id=..., keypath=...)` to
+fetch full content of a specific result if needed.
 
 ### memstate_remember (Preferred for saving)
 
 ```
 memstate_remember(
-  project_id="myapp",
+  project_id="my_app",
   content="## Auth Refactor\n- Switched from JWT to session cookies\n- Added MFA via TOTP\n- Updated /api/auth/* endpoints",
   source="agent"
 )
@@ -109,8 +109,8 @@ any content longer than a single value.
 ### memstate_set (Single facts only)
 
 ```
-memstate_set(project_id="myapp", keypath="database.engine", value="PostgreSQL")
-memstate_set(project_id="myapp", keypath="api.port", value="8080", category="config")
+memstate_set(project_id="my_app", keypath="database.engine", value="PostgreSQL")
+memstate_set(project_id="my_app", keypath="api.port", value="8080", category="config")
 ```
 
 Valid categories: `decision`, `preference`, `fact`, `task`, `context`,
@@ -119,8 +119,7 @@ Valid categories: `decision`, `preference`, `fact`, `task`, `context`,
 ### memstate_history
 
 ```
-memstate_history(project_id="myapp", keypath="auth.provider")
-memstate_history(memory_id="mem_abc123")
+memstate_history(project_id="my_app", keypath="auth.provider")
 ```
 
 ## Keypath Conventions
@@ -128,7 +127,7 @@ memstate_history(memory_id="mem_abc123")
 - Use dots for hierarchy: `auth.provider`, `database.engine`, `api.pagination.style`
 - Lowercase only, no spaces
 - Be specific: prefer `auth.provider` over `auth`
-- Keypaths are auto-prefixed — `keypath="database"` with `project_id="myapp"` becomes `project.myapp.database`
+- Keypaths are auto-prefixed — `keypath="database"` with `project_id="my_app"` becomes `project.my_app.database`
 
 ## Conflict Resolution
 
