@@ -1,16 +1,23 @@
 /**
  * Memstate AI skill content — embedded so the CLI works without file system access to the repo.
- * This mirrors memstate/SKILL.md in the repository root.
+ * This mirrors memstate-ai/SKILL.md in the repository root.
  */
 
 export const SKILL_MD_CONTENT = `---
-name: memstate
+name: memstate-ai
 description: >
   Persistent, versioned memory for AI agents using Memstate AI. Use this skill
   to store and retrieve structured knowledge across tasks and sessions. Invoke
   BEFORE every task to fetch existing context and AFTER every task to save
   summaries. Works with any project — use the GitHub repo name or a short
   descriptive name as the project_id.
+metadata:
+  category: development
+  author: yepthatsjason
+  source:
+    repository: https://github.com/memstate-ai/memstate-skills
+    path: memstate-ai
+    license_path: LICENSE
 ---
 
 # Memstate AI — Persistent Agent Memory
@@ -18,6 +25,15 @@ description: >
 Memstate AI gives you structured, versioned memory that persists across sessions.
 Use it to avoid repeating work, preserve architectural decisions, and maintain
 project context automatically.
+
+## Prerequisites: The MCP Server & API Key
+
+This skill relies on the **Memstate MCP Server** to actually read and write memories.
+
+1. **API Key Required**: You must have a \`MEMSTATE_API_KEY\` set in your environment.
+   - *Agents:* If you encounter authentication errors, ask the user to provide their API key from [memstate.ai/dashboard](https://memstate.ai/dashboard).
+2. **MCP Server**: Ensure the \`@memstate/mcp\` server is installed and running in your MCP configuration.
+   - If the tools (\`memstate_get\`, \`memstate_remember\`, etc.) are missing, ask the user to run \`npx @memstate/mcp setup\` to configure the MCP server.
 
 ## Project ID
 

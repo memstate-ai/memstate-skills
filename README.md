@@ -43,32 +43,32 @@ If you prefer to install manually, follow the instructions for your specific age
 ```bash
 mkdir -p .claude/skills/memstate
 curl -o .claude/skills/memstate/SKILL.md \
-  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate/SKILL.md
+  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate-ai/SKILL.md
 ```
 
 ### Claude Code (Global — all projects)
 ```bash
 mkdir -p ~/.claude/skills/memstate
 curl -o ~/.claude/skills/memstate/SKILL.md \
-  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate/SKILL.md
+  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate-ai/SKILL.md
 ```
 
 ### Cline
 ```bash
 mkdir -p .clinerules
 curl -o .clinerules/memstate.md \
-  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate/SKILL.md
+  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate-ai/SKILL.md
 ```
 
 ### Cursor
 ```bash
 mkdir -p .cursor/rules
 curl -o .cursor/rules/memstate.mdc \
-  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate/SKILL.md
+  https://raw.githubusercontent.com/memstate-ai/memstate-skills/main/memstate-ai/SKILL.md
 ```
 
 ### Universal (AGENTS.md / CLAUDE.md / GEMINI.md)
-Append the contents of [`memstate/SKILL.md`](./memstate/SKILL.md) to your project's instruction file.
+Append the contents of [`memstate-ai/SKILL.md`](./memstate-ai/SKILL.md) to your project's instruction file.
 
 ## ⚙️ Prerequisites
 
