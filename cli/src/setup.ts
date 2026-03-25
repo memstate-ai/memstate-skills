@@ -48,7 +48,7 @@ function detectGitRepoName(cwd: string): string | null {
       .trim();
     // Extract repo name from SSH or HTTPS remote URL
     const match = remote.match(/[/:]([^/]+?)(?:\.git)?$/);
-    return match ? match[1].toLowerCase().replace(/[^a-z0-9-]/g, "-") : null;
+    return match ? match[1].toLowerCase().replace(/[^a-z0-9_]/g, "_") : null;
   } catch {
     return null;
   }
@@ -295,17 +295,17 @@ export async function main(): Promise<void> {
     if (confirm.toLowerCase() === "y" || confirm.trim() === "") {
       projectId = detectedRepoName;
     } else if (confirm.toLowerCase() !== "n") {
-      projectId = confirm.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "-") || detectedRepoName;
+      projectId = confirm.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_") || detectedRepoName;
     } else {
-      const custom = await promptUser(rl, "Enter project ID (e.g. 'my-app'): ");
-      projectId = custom.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "-") || "myproject";
+      const custom = await promptUser(rl, "Enter project ID (e.g. 'my_app'): ");
+      projectId = custom.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_") || "my_project";
     }
   } else {
     console.log(
       "No git remote detected. Enter a short project ID (e.g. the repo name or topic)."
     );
     const custom = await promptUser(rl, "Project ID: ");
-    projectId = custom.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "-") || "myproject";
+    projectId = custom.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_") || "my_project";
   }
 
   console.log(`\nUsing project ID: "${projectId}"\n`);

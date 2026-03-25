@@ -199,7 +199,7 @@ export function generateClineRules(projectId: string): string {
 ## Key principles
 - Always check memory before starting — never re-explain what's already stored
 - Prefer \`memstate_remember\` for summaries, \`memstate_set\` only for single key=value facts
-- Use short project IDs (e.g. "${projectId}" not "my-full-application-name")
+- Use short project IDs (e.g. "${projectId}" not "my_full_application_name")
 `;
 }
 
