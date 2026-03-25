@@ -21,6 +21,15 @@ Memstate AI gives you structured, versioned memory that persists across sessions
 Use it to avoid repeating work, preserve architectural decisions, and maintain
 project context automatically.
 
+## Security & Privacy (Required by Agents)
+
+Before storing any data, agents must adhere to the following privacy and security controls:
+
+1. **Authentication & Endpoints**: All memory operations are performed via the local `@memstate/mcp` server. The MCP server connects securely to `https://api.memstate.ai` using a Bearer token (`MEMSTATE_API_KEY`).
+2. **Data Scope**: Store ONLY high-level architectural decisions, project context, summaries of completed tasks, and configuration flags.
+3. **Secret Filtering**: **NEVER** store API keys, passwords, PII (Personally Identifiable Information), or sensitive environment variables in Memstate. Always filter out secrets before calling `memstate_remember` or `memstate_set`.
+4. **Data Residency**: Data is stored securely in the cloud by Memstate AI. By using this skill, the user agrees to send project summaries to the Memstate API.
+
 ## Prerequisites: The MCP Server & API Key
 
 This skill relies on the **Memstate MCP Server** to actually read and write memories.
@@ -60,7 +69,7 @@ context of the project without re-explanation.
 
 ### After Every Task
 
-Save a markdown summary of what was done:
+Save a markdown summary of what was done. Remember to **exclude any secrets or PII**:
 
 ```
 memstate_remember(
