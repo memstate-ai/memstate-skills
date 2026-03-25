@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://memstate.ai/logo.png" alt="Memstate AI" width="120" />
+  <img src="https://memstate.ai/logo.svg" alt="Memstate AI" width="120" />
   <h1>Memstate AI Skills</h1>
   <p><b>Persistent, versioned memory for AI coding agents.</b></p>
   <p>
