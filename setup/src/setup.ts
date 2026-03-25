@@ -232,9 +232,10 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
   // Track already-written paths to avoid duplicates
   const writtenMcpPaths = new Set<string>();
   const writtenSkillPaths = new Set<string>();
+  const writtenInstructionPaths = new Set<string>();
 
   for (const agent of selectedAgents) {
-    // ── MCP config ──────────────────────────────────────────────────────────
+    // ── MCP config ────────────────────────────────────────────────────────────────
     if (installMcp && !writtenMcpPaths.has(agent.mcpConfigPath)) {
       writtenMcpPaths.add(agent.mcpConfigPath);
       const result = writeMcpConfig(agent.mcpConfigPath, apiKey);
@@ -249,7 +250,7 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
       });
     }
 
-    // ── Skill file ──────────────────────────────────────────────────────────
+    // ── Skill file ────────────────────────────────────────────────────────────────
     if (installSkill && !writtenSkillPaths.has(agent.skillPath)) {
       writtenSkillPaths.add(agent.skillPath);
       const result = writeSkillFile(agent.skillPath, SKILL_MD_CONTENT);
@@ -262,26 +263,34 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
         success: result.success,
         message: result.message,
       });
+    }
 
-      // Append instruction block if the agent has one
-      if (agent.instructionPath && projectId) {
-        const iResult = appendInstructionBlock(agent.instructionPath, projectId);
-        const iLabel = iResult.success ? tick : cross;
-        console.log(
-          iLabel(
-            `${c.bold(agent.name)} instructions  ${c.muted(iResult.message)}`
-          )
-        );
-        if (agent.instructionLabel) {
-          console.log(arrow(agent.instructionLabel));
-        }
-        instructionResults.push({
-          agent,
-          filePath: agent.instructionPath,
-          success: iResult.success,
-          message: iResult.message,
-        });
+    // ── Instruction file ──────────────────────────────────────────────────────────
+    // Always write instruction rules when installing MCP or Skill — the agent
+    // needs to know to call memstate_get/memstate_remember before/after tasks.
+    if (
+      (installMcp || installSkill) &&
+      agent.instructionPath &&
+      projectId &&
+      !writtenInstructionPaths.has(agent.instructionPath)
+    ) {
+      writtenInstructionPaths.add(agent.instructionPath);
+      const iResult = appendInstructionBlock(agent.instructionPath, projectId);
+      const iLabel = iResult.success ? tick : cross;
+      console.log(
+        iLabel(
+          `${c.bold(agent.name)} instructions  ${c.muted(iResult.message)}`
+        )
+      );
+      if (agent.instructionLabel) {
+        console.log(arrow(agent.instructionLabel));
       }
+      instructionResults.push({
+        agent,
+        filePath: agent.instructionPath,
+        success: iResult.success,
+        message: iResult.message,
+      });
     }
   }
 

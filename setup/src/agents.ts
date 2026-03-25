@@ -46,6 +46,28 @@ export function getAgents(root: string): Agent[] {
       instructionPath: path.join(root, "CLAUDE.md"),
       instructionLabel: "CLAUDE.md",
     },
+    // ── AGENTS.md (Generic standard) ─────────────────────────────────────────
+    {
+      id: "agents-md",
+      name: "AGENTS.md (Generic)",
+      detected: fs.existsSync(path.join(root, "AGENTS.md")),
+      skillPath: path.join(root, ".agents", "skills", "memstate-ai", "SKILL.md"),
+      mcpConfigPath: path.join(root, "mcp.json"),
+      mcpConfigLabel: "mcp.json",
+      instructionPath: path.join(root, "AGENTS.md"),
+      instructionLabel: "AGENTS.md",
+    },
+    // ── GEMINI.md ────────────────────────────────────────────────────────────
+    {
+      id: "gemini-md",
+      name: "GEMINI.md",
+      detected: fs.existsSync(path.join(root, "GEMINI.md")),
+      skillPath: path.join(root, ".gemini", "skills", "memstate-ai", "SKILL.md"),
+      mcpConfigPath: path.join(root, "mcp.json"),
+      mcpConfigLabel: "mcp.json",
+      instructionPath: path.join(root, "GEMINI.md"),
+      instructionLabel: "GEMINI.md",
+    },
     // ── Cursor ───────────────────────────────────────────────────────────────
     {
       id: "cursor",
@@ -56,8 +78,9 @@ export function getAgents(root: string): Agent[] {
       skillPath: path.join(root, ".cursor", "rules", "memstate-ai.mdc"),
       mcpConfigPath: path.join(root, ".cursor", "mcp.json"),
       mcpConfigLabel: ".cursor/mcp.json",
-      instructionPath: path.join(root, ".cursor", "rules", "memstate-ai.mdc"),
-      instructionLabel: ".cursor/rules/memstate-ai.mdc",
+      // For MCP installs, we just want a standard markdown rule, not an MDC skill file
+      instructionPath: path.join(root, ".cursor", "rules", "memstate-ai-mcp.mdc"),
+      instructionLabel: ".cursor/rules/memstate-ai-mcp.mdc",
     },
     // ── Cline ────────────────────────────────────────────────────────────────
     {

@@ -1,6 +1,6 @@
 {
   "name": "@memstate/setup",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Set up Memstate AI persistent memory for your AI coding agent in seconds",
   "keywords": [
     "memstate",
