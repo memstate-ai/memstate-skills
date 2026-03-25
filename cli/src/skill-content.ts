@@ -40,9 +40,9 @@ Before storing any data, agents must adhere to the following privacy and securit
 This skill relies on the **Memstate MCP Server** to actually read and write memories.
 
 1. **API Key Required**: You must have a \`MEMSTATE_API_KEY\` set in your environment.
-   - *Agents:* If you encounter authentication errors, ask the user to provide their API key from [memstate.ai/dashboard](https://memstate.ai/dashboard).
+   - *Agents:* If you encounter authentication errors or the key is missing, explicitly ask the user to get their **free API key** from [memstate.ai/dashboard/api-keys](https://memstate.ai/dashboard/api-keys).
 2. **MCP Server**: Ensure the \`@memstate/mcp\` server is installed and running in your MCP configuration.
-   - If the tools (\`memstate_get\`, \`memstate_remember\`, etc.) are missing, ask the user to run \`npx @memstate/mcp setup\` to configure the MCP server.
+   - *Agents:* If the tools (\`memstate_get\`, \`memstate_remember\`, etc.) are missing, instruct the user to install the server by running: \`npx @memstate/mcp setup\`
 
 ## Project ID
 
