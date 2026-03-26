@@ -82,13 +82,13 @@ ${hr()}
   ${c.bold("LINKS")}
 
     ${c.muted("Docs:      ")}${c.brandDim("https://memstate.ai/docs")}
-    ${c.muted("API Keys:  ")}${c.brandDim("https://memstate.ai/dashboard/api-keys")}
+    ${c.muted("API Keys:  ")}${c.brandDim("https://memstate.ai")}
     ${c.muted("GitHub:    ")}${c.brandDim("https://github.com/memstate-ai/memstate-skills")}
 `);
 }
 
 function showVersion(): void {
-  console.log("1.0.0");
+  console.log("1.0.2");
 }
 
 async function main(): Promise<void> {

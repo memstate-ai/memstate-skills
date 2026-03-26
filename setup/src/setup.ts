@@ -120,10 +120,21 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
   const detectedAgents = allAgents.filter((a) => a.detected && a.id !== "other");
 
   if (detectedAgents.length > 0) {
-    console.log(info(`Found ${c.bold(String(detectedAgents.length))} agent environment(s):`));
-    detectedAgents.forEach((a) => console.log(tick(a.name)));
+    console.log(info(`Found ${c.bold(String(detectedAgents.length))} agent environment(s) for ${c.code(root)}:`));
+    detectedAgents.forEach((a) => {
+      console.log(tick(a.name));
+      if (installMcp && a.mcpConfigLabel) {
+        console.log(`      ${c.muted("MCP:")}   ${c.muted(a.mcpConfigLabel)}`);
+      }
+      if (installSkill && a.skillPath) {
+        console.log(`      ${c.muted("Skill:")} ${c.muted(a.skillPath.replace(os.homedir(), "~"))}`);
+      }
+      if (a.instructionLabel) {
+        console.log(`      ${c.muted("Rules:")} ${c.muted(a.instructionLabel)}`);
+      }
+    });
   } else {
-    console.log(info("No agent environments auto-detected."));
+    console.log(info(`No agent environments auto-detected in ${c.code(root)}`));
   }
   console.log();
 
@@ -166,6 +177,18 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
   if (installMcp || installSkill) {
     console.log(step(3, "Project ID"));
     console.log();
+    
+    const isGitRepo = fs.existsSync(path.join(root, ".git"));
+    const detected = detectProjectId(root);
+
+    if (!isGitRepo) {
+      console.log(info(`You are not inside a git repository (${c.code(root)}).`));
+      console.log(hint("  For best results, Memstate should be installed at the root of a project."));
+      console.log(hint("  If you want to install for a specific project, exit and run:"));
+      console.log(hint("  npx @memstate/setup --path /path/to/your/project"));
+      console.log();
+    }
+
     console.log(
       info(
         "The project ID namespaces your memories. Use your repo name or a short topic."
@@ -174,7 +197,6 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
     console.log(hint("  Must be lowercase with underscores only (e.g. my_app, frontend_redesign)"));
     console.log();
 
-    const detected = detectProjectId(root);
     if (detected) {
       console.log(info(`Detected from git: ${c.code(detected)}`));
     }
@@ -202,7 +224,7 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
     console.log();
     console.log(
       info(
-        `Get your ${c.bold("free")} API key at: ${c.brandDim("https://memstate.ai/dashboard/api-keys")}`
+        `Get your ${c.bold("free")} API key at: ${c.brandDim("https://memstate.ai")}`
       )
     );
     console.log();
@@ -229,15 +251,19 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
   const skillResults: { agent: Agent; skillPath: string; success: boolean; message: string }[] = [];
   const instructionResults: { agent: Agent; filePath: string; success: boolean; message: string }[] = [];
 
-  // Track already-written paths to avoid duplicates
+  // Track already-written paths to avoid duplicates (using realpath to handle symlinks)
   const writtenMcpPaths = new Set<string>();
   const writtenSkillPaths = new Set<string>();
   const writtenInstructionPaths = new Set<string>();
 
   for (const agent of selectedAgents) {
     // ── MCP config ────────────────────────────────────────────────────────────────
-    if (installMcp && !writtenMcpPaths.has(agent.mcpConfigPath)) {
-      writtenMcpPaths.add(agent.mcpConfigPath);
+    const realMcpPath = fs.existsSync(agent.mcpConfigPath) 
+      ? fs.realpathSync(agent.mcpConfigPath) 
+      : agent.mcpConfigPath;
+      
+    if (installMcp && !writtenMcpPaths.has(realMcpPath)) {
+      writtenMcpPaths.add(realMcpPath);
       const result = writeMcpConfig(agent.mcpConfigPath, apiKey);
       const label = result.success ? tick : cross;
       console.log(label(`${c.bold(agent.name)} MCP config  ${c.muted(result.message)}`));
@@ -251,8 +277,12 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
     }
 
     // ── Skill file ────────────────────────────────────────────────────────────────
-    if (installSkill && !writtenSkillPaths.has(agent.skillPath)) {
-      writtenSkillPaths.add(agent.skillPath);
+    const realSkillPath = fs.existsSync(agent.skillPath)
+      ? fs.realpathSync(agent.skillPath)
+      : agent.skillPath;
+      
+    if (installSkill && !writtenSkillPaths.has(realSkillPath)) {
+      writtenSkillPaths.add(realSkillPath);
       const result = writeSkillFile(agent.skillPath, SKILL_MD_CONTENT);
       const label = result.success ? tick : cross;
       console.log(label(`${c.bold(agent.name)} skill file  ${c.muted(result.message)}`));
@@ -268,13 +298,18 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
     // ── Instruction file ──────────────────────────────────────────────────────────
     // Always write instruction rules when installing MCP or Skill — the agent
     // needs to know to call memstate_get/memstate_remember before/after tasks.
+    const realInstructionPath = agent.instructionPath && fs.existsSync(agent.instructionPath)
+      ? fs.realpathSync(agent.instructionPath)
+      : agent.instructionPath;
+      
     if (
       (installMcp || installSkill) &&
       agent.instructionPath &&
+      realInstructionPath &&
       projectId &&
-      !writtenInstructionPaths.has(agent.instructionPath)
+      !writtenInstructionPaths.has(realInstructionPath)
     ) {
-      writtenInstructionPaths.add(agent.instructionPath);
+      writtenInstructionPaths.add(realInstructionPath);
       const iResult = appendInstructionBlock(agent.instructionPath, projectId);
       const iLabel = iResult.success ? tick : cross;
       console.log(
@@ -322,7 +357,7 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
     );
     console.log(
       hint(
-        `     Get a free key at: https://memstate.ai/dashboard/api-keys`
+        `     Get a free key at: https://memstate.ai`
       )
     );
     console.log();

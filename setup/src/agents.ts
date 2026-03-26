@@ -180,6 +180,11 @@ export function writeMcpConfig(
   try {
     const dir = path.dirname(configPath);
     fs.mkdirSync(dir, { recursive: true });
+    
+    // Resolve symlinks if the file exists to ensure we're editing the real target
+    if (fs.existsSync(configPath)) {
+      configPath = fs.realpathSync(configPath);
+    }
 
     let config: Record<string, unknown> = {};
     let created = false;
@@ -221,6 +226,11 @@ export function writeSkillFile(
   try {
     const dir = path.dirname(skillPath);
     fs.mkdirSync(dir, { recursive: true });
+    
+    if (fs.existsSync(skillPath)) {
+      skillPath = fs.realpathSync(skillPath);
+    }
+    
     fs.writeFileSync(skillPath, content, "utf-8");
     return { success: true, message: "Installed" };
   } catch (err) {
@@ -236,22 +246,62 @@ export function appendInstructionBlock(
   filePath: string,
   projectId: string
 ): { success: boolean; message: string } {
-  const MARKER = "<!-- memstate-ai -->";
-  const block = `\n${MARKER}\n## Memory (Memstate AI)\n\nThis project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.\n\n### Before each task\n\`\`\`\nmemstate_get(project_id="${projectId}")\n\`\`\`\n\n### After each task\n\`\`\`\nmemstate_remember(\n  project_id="${projectId}",\n  content="## Task Summary\\n- What was done\\n- Key decisions\\n- Files modified",\n  source="agent"\n)\n\`\`\`\n`;
+  const BEGIN_MARKER = "<!-- BEGIN MEMSTATE-AI INSTRUCTIONS -->";
+  const END_MARKER = "<!-- END MEMSTATE-AI INSTRUCTIONS -->";
+  const VERSION = "v1"; // Used to track instruction block versions in the future if needed
+
+  const block = `${BEGIN_MARKER}
+## Memory (Memstate AI)
+This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
+
+### Before each task
+\`\`\`
+memstate_get(project_id="${projectId}")
+\`\`\`
+
+### After each task
+\`\`\`
+memstate_remember(
+  project_id="${projectId}",
+  content="## Task Summary\\n- What was done\\n- Key decisions\\n- Files modified",
+  source="agent"
+)
+\`\`\`
+${END_MARKER}`;
 
   try {
     const dir = path.dirname(filePath);
     fs.mkdirSync(dir, { recursive: true });
 
     if (fs.existsSync(filePath)) {
+      filePath = fs.realpathSync(filePath);
       const existing = fs.readFileSync(filePath, "utf-8");
-      if (existing.includes(MARKER)) {
-        return { success: true, message: "Already present" };
+      
+      // If the block exists, replace it
+      if (existing.includes(BEGIN_MARKER) && existing.includes(END_MARKER)) {
+        const regex = new RegExp(`${BEGIN_MARKER}[\\s\\S]*?${END_MARKER}`, "g");
+        const updated = existing.replace(regex, block);
+        if (existing === updated) {
+          return { success: true, message: "Already up to date" };
+        }
+        fs.writeFileSync(filePath, updated, "utf-8");
+        return { success: true, message: "Updated" };
       }
-      fs.appendFileSync(filePath, block, "utf-8");
+      
+      // Handle legacy marker
+      const LEGACY_MARKER = "<!-- memstate-ai -->";
+      if (existing.includes(LEGACY_MARKER)) {
+        // We can't safely regex the legacy block since it had no end marker,
+        // but we can append the new one and warn the user.
+        fs.appendFileSync(filePath, "\n" + block + "\n", "utf-8");
+        return { success: true, message: "Appended (legacy block detected)" };
+      }
+
+      // Otherwise, just append
+      fs.appendFileSync(filePath, "\n" + block + "\n", "utf-8");
       return { success: true, message: "Appended" };
     } else {
-      fs.writeFileSync(filePath, block.trimStart(), "utf-8");
+      fs.writeFileSync(filePath, block + "\n", "utf-8");
       return { success: true, message: "Created" };
     }
   } catch (err) {
