@@ -1,6 +1,6 @@
 {
   "name": "@memstate/setup",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Set up Memstate AI persistent memory for your AI coding agent in seconds",
   "keywords": [
     "memstate",
@@ -13,6 +13,11 @@
     "cline",
     "windsurf",
     "kilo",
+    "copilot",
+    "gemini",
+    "roo-code",
+    "amazon-q",
+    "zed",
     "setup",
     "install"
   ],
@@ -37,7 +42,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
-    "prepublishOnly": "npm run build"
+    "test": "node --import tsx --test src/__tests__/*.test.ts",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "kleur": "^4.1.5",

@@ -179,32 +179,33 @@ export function generateAgentInstructions(projectId: string): string {
 
 This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
 
-### Before each task
-Check what already exists to avoid duplicate work:
+### REQUIRED: Start and end every task with memory
+
+**BEFORE starting any task**, load existing context so you don't redo past work or revert intentional decisions:
 \`\`\`
 memstate_get(project_id="${projectId}")
 \`\`\`
-Or search by topic:
-\`\`\`
-memstate_search(query="<topic>", project_id="${projectId}")
-\`\`\`
 
-### After each task
-Save a markdown summary:
+**AFTER completing any task**, save what you did so the next session has context:
 \`\`\`
 memstate_remember(
   project_id="${projectId}",
-  content="## Task Summary\\n- What was done\\n- Key decisions made\\n- Files modified\\n- Next steps",
+  content="## Task Summary\\n- What was done\\n- Key decisions made\\n- Files modified",
   source="agent"
 )
 \`\`\`
 
-### Tool guide
-- \`memstate_remember\` — markdown summaries, decisions, task results (**preferred**)
-- \`memstate_set\` — single short values only (config flags, status)
-- \`memstate_get\` — browse/retrieve before tasks
-- \`memstate_search\` — semantic lookup when keypath unknown
-- \`memstate_history\` — audit how knowledge evolved
+These two calls are mandatory. Skipping them means the next session starts blind.
+
+### Tool reference
+| Tool | When to use |
+|------|-------------|
+| memstate_get | **Start of every task.** Browse project tree or fetch content. |
+| memstate_remember | **End of every task.** Save markdown summaries, notes, decisions. |
+| memstate_search | Find memories by meaning when you don't know the exact keypath. |
+| memstate_set | Store a single key=value fact (e.g. config.port). Not for summaries. |
+| memstate_history | View version history of a keypath. |
+| memstate_delete | Soft-delete a keypath (history preserved). |
 `.trimStart();
 }
 
@@ -212,93 +213,57 @@ memstate_remember(
  * Generate Cline rules content for .clinerules/memstate.md
  */
 export function generateClineRules(projectId: string): string {
-  return `# Memstate Memory Rules
-
-## Before each task
-- Run \`memstate_get(project_id="${projectId}")\` to load existing context
-- Search for relevant memories: \`memstate_search(query="<topic>", project_id="${projectId}")\`
-
-## After each task
-- Save a summary: \`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
-
-## Key principles
-- Always check memory before starting — never re-explain what's already stored
-- Prefer \`memstate_remember\` for summaries, \`memstate_set\` only for single key=value facts
-- Use short project IDs (e.g. "${projectId}" not "my_full_application_name")
-`;
+  return generateUniversalRules(projectId);
 }
 
-/**
- * Generate Kilo Code rules content for .kilocode/rules/memstate.md
- * Kilo Code rules are always-on (injected every prompt), unlike skills which are on-demand.
- * This provides a lightweight always-present reminder alongside the on-demand SKILL.md.
- */
 export function generateKiloRules(projectId: string): string {
-  return `# Memstate AI Memory
-
-This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
-
-## Before each task
-- Run \`memstate_get(project_id="${projectId}")\` to load existing context
-- Or search: \`memstate_search(query="<topic>", project_id="${projectId}")\`
-
-## After each task
-- Save a summary: \`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
-
-## Key principles
-- Always check memory before starting — never re-explain what's already stored
-- Prefer \`memstate_remember\` for summaries, \`memstate_set\` only for single key=value facts
-`;
+  return generateUniversalRules(projectId);
 }
 
-/**
- * Generate Windsurf rules content for .windsurf/rules/memstate.md
- */
 export function generateWindsurfRules(projectId: string): string {
-  return `# Memstate AI Memory
-
-This project uses [Memstate AI](https://memstate.ai) for persistent, versioned memory.
-
-## Before each task
-Check existing project knowledge to avoid duplicate work:
-\`memstate_get(project_id="${projectId}")\`
-
-## After each task
-Save a markdown summary of what was done:
-\`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
-
-## Tools
-- \`memstate_remember\` — preferred for summaries and decisions
-- \`memstate_set\` — single key=value facts only
-- \`memstate_get\` — browse before tasks
-- \`memstate_search\` — find by meaning
-`;
+  return generateUniversalRules(projectId);
 }
 
-/**
- * Generate Cursor MDC rules content for .cursor/rules/memstate.mdc
- */
 export function generateCursorRules(projectId: string): string {
   return `---
-description: Memstate AI memory — use before and after every task
-globs: ["**/*"]
 alwaysApply: true
 ---
 
-# Memstate AI Memory
+${generateUniversalRules(projectId)}`;
+}
 
-## Before each task
-Check existing project knowledge:
-\`memstate_get(project_id="${projectId}")\`
+/** Single source of truth for agent rule file content */
+function generateUniversalRules(projectId: string): string {
+  return `# Memstate MCP - Memory Storage
 
-## After each task
-Save a summary:
-\`memstate_remember(project_id="${projectId}", content="## Summary\\n...", source="agent")\`
+This project uses Memstate MCP for persistent, versioned memory across sessions.
 
-## Tools
-- \`memstate_remember\` — preferred for summaries and decisions
-- \`memstate_set\` — single key=value facts only
-- \`memstate_get\` — browse before tasks
-- \`memstate_search\` — find by meaning
+## REQUIRED: Start and end every task with memory
+
+**BEFORE starting any task**, load existing context so you don't redo past work or revert intentional decisions:
+\`\`\`
+memstate_get(project_id="${projectId}")
+\`\`\`
+
+**AFTER completing any task**, save what you did so the next session has context:
+\`\`\`
+memstate_remember(project_id="${projectId}", content="## Task Summary\\n- What was done\\n- Key decisions made\\n- Files modified", source="agent")
+\`\`\`
+
+These two calls are mandatory. Skipping them means the next session starts blind.
+
+## Tool reference
+
+| Tool | When to use |
+|------|-------------|
+| memstate_get | **Start of every task.** Browse project tree or fetch content at a keypath. |
+| memstate_remember | **End of every task.** Save markdown summaries, notes, decisions. |
+| memstate_search | Find memories by meaning when you don't know the exact keypath. |
+| memstate_set | Store a single key=value fact (e.g. config.port). Not for summaries. |
+| memstate_history | View version history of a keypath. |
+| memstate_delete | Soft-delete a keypath (history preserved). |
+
+## Project naming
+Use a short snake_case name matching your repo or topic. All related memories should share the same project_id.
 `;
 }

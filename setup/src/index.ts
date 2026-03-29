@@ -11,7 +11,11 @@ export {
   writeMcpConfig,
   writeSkillFile,
   appendInstructionBlock,
+  fetchInstructions,
   mcpServerStanza,
+  safeParseJson,
+  INSTRUCTIONS_URL,
+  INSTRUCTION_VERSION,
   type Agent,
 } from "./agents.js";
 export { SKILL_MD_CONTENT } from "./skill-content.js";

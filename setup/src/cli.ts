@@ -9,6 +9,7 @@
  *   npx @memstate/setup --help     Show help
  */
 
+import * as fs from "fs";
 import minimist from "minimist";
 import { c, LOGO_COMPACT, hr } from "./theme.js";
 import { runSetup } from "./setup.js";
@@ -88,7 +89,9 @@ ${hr()}
 }
 
 function showVersion(): void {
-  console.log("1.0.2");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+  console.log(pkg.version);
 }
 
 async function main(): Promise<void> {
