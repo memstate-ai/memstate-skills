@@ -108,6 +108,24 @@ describe("getAgents", () => {
       `Claude Code should NOT use claude_desktop_config.json`);
   });
 
+  it("claude-code has useCli=true (uses claude CLI for install)", () => {
+    const agents = getAgents("/tmp/fake-project");
+    const claude = agents.find((a) => a.id === "claude-code");
+    assert.ok(claude);
+    assert.equal(claude.useCli, true,
+      "Claude Code should use the claude CLI for MCP installation");
+  });
+
+  it("claude-desktop does NOT use CLI (direct JSON edit)", () => {
+    const agents = getAgents("/tmp/fake-project");
+    const desktop = agents.find((a) => a.id === "claude-desktop");
+    assert.ok(desktop);
+    assert.ok(!desktop.useCli,
+      "Claude Desktop should use direct JSON editing, not the CLI");
+    assert.ok(desktop.mcpConfigPath.includes("claude_desktop_config.json"),
+      `Claude Desktop should use claude_desktop_config.json, got ${desktop.mcpConfigPath}`);
+  });
+
   it("detects agents based on filesystem", () => {
     const tmp = makeTmpDir();
     try {

@@ -21,6 +21,8 @@ import {
   writeSkillFile,
   appendInstructionBlock,
   fetchInstructions,
+  claudeCliAvailable,
+  installViaClaudeCli,
   type Agent,
 } from "./agents.js";
 import { SKILL_MD_CONTENT } from "./skill-content.js";
@@ -264,7 +266,22 @@ export async function runSetup(opts: SetupOptions): Promise<void> {
 
     if (installMcp && !writtenMcpPaths.has(realMcpPath)) {
       writtenMcpPaths.add(realMcpPath);
-      const result = writeMcpConfig(agent.mcpConfigPath, apiKey, agent.mcpKey);
+
+      let result: { success: boolean; message: string; created: boolean };
+
+      if (agent.useCli) {
+        // Claude Code: use the official `claude mcp add --scope user` CLI
+        if (claudeCliAvailable()) {
+          result = installViaClaudeCli(apiKey);
+        } else {
+          // claude CLI not found — fall back to direct JSON edit with a warning
+          console.log(hint(`  claude CLI not found — falling back to direct JSON edit for ${agent.name}`));
+          result = writeMcpConfig(agent.mcpConfigPath, apiKey, agent.mcpKey);
+        }
+      } else {
+        result = writeMcpConfig(agent.mcpConfigPath, apiKey, agent.mcpKey);
+      }
+
       const label = result.success ? tick : cross;
       console.log(label(`${c.bold(agent.name)} MCP config  ${c.muted(result.message)}`));
       console.log(arrow(agent.mcpConfigLabel));

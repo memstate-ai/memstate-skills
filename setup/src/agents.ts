@@ -16,7 +16,7 @@ export interface Agent {
   detected: boolean;
   /** Absolute path to write the SKILL.md */
   skillPath: string;
-  /** Absolute path to the MCP config JSON file */
+  /** Absolute path to the MCP config JSON file (used for display and fallback) */
   mcpConfigPath: string;
   /** Human-readable name of the MCP config file */
   mcpConfigLabel: string;
@@ -28,6 +28,11 @@ export interface Agent {
   instructionLabel?: string;
   /** True if this is a global (user-level) install */
   isGlobal?: boolean;
+  /**
+   * If true, install MCP config via the agent's own CLI rather than direct JSON editing.
+   * Currently only used for Claude Code (`claude mcp add --scope user`).
+   */
+  useCli?: boolean;
 }
 
 export function getAgents(root: string): Agent[] {
@@ -63,10 +68,13 @@ export function getAgents(root: string): Agent[] {
       detected: fs.existsSync(path.join(home, ".claude")),
       skillPath: path.join(root, ".claude", "skills", "memstate-ai", "SKILL.md"),
       mcpConfigPath: path.join(home, ".claude.json"),
-      mcpConfigLabel: "~/.claude.json",
+      mcpConfigLabel: "~/.claude.json (via claude CLI)",
       mcpKey: "mcpServers",
       instructionPath: path.join(root, "CLAUDE.md"),
       instructionLabel: "CLAUDE.md",
+      // Use `claude mcp add --scope user` — the official supported method.
+      // Falls back to direct JSON edit if the claude CLI is not found.
+      useCli: true,
     },
     // ── Claude Desktop ───────────────────────────────────────────────────────
     {
@@ -249,6 +257,52 @@ export function mcpServerStanza(apiKey = "YOUR_API_KEY_HERE"): object {
       MEMSTATE_API_KEY: apiKey,
     },
   };
+}
+
+/** Check whether the `claude` CLI is available on PATH */
+export function claudeCliAvailable(): boolean {
+  try {
+    execSync("claude --version", { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Install Memstate into Claude Code via the official `claude mcp add` CLI.
+ * Uses --scope user so it applies across all projects.
+ * Returns { success, message, created }.
+ */
+export function installViaClaudeCli(
+  apiKey: string
+): { success: boolean; message: string; created: boolean } {
+  try {
+    // Remove any existing memstate entry first (ignore errors if not present)
+    try {
+      execSync("claude mcp remove memstate --scope user", { stdio: "ignore" });
+    } catch {
+      // Not present — that's fine
+    }
+
+    const cmd = [
+      "claude", "mcp", "add",
+      "--scope", "user",
+      "--env", `MEMSTATE_API_KEY=${apiKey}`,
+      "--",
+      "memstate",
+      "npx", "-y", "@memstate/mcp",
+    ].join(" ");
+
+    execSync(cmd, { stdio: "pipe" });
+    return { success: true, message: "Configured via claude CLI (user scope)", created: true };
+  } catch (err) {
+    return {
+      success: false,
+      message: `claude CLI failed: ${err instanceof Error ? err.message : String(err)}`,
+      created: false,
+    };
+  }
 }
 
 /**
